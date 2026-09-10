@@ -58,6 +58,17 @@ struct GenerativeView: View {
         }
     }
     
+    
+    //add selection enum for cases
+    enum Selection: String, CaseIterable, Identifiable {
+        case summarize, tag, analyse, edit, tonality
+        var id: Self { self }
+    }
+
+
+    @State private var selectedChoice: Selection = .summarize
+    
+    
     /* Notera att vi behöver 5 olika kontrollfall (case) i vår switch-sats, där vi kan ge olika felmeddelanden om modellens tillgänglighet*/
    
     var body: some View {
@@ -74,8 +85,15 @@ struct GenerativeView: View {
                          Likadant för hjälptexten "Type your question here"*/
                         Text("TextPal")
                             .font(.system(.largeTitle, design: .rounded, weight: .bold))
+                        Picker("Selection", selection: $selectedChoice) {
+                            Text("Summarize").tag(Selection.summarize)
+                            Text("Analyse text").tag(Selection.analyse)
+                            Text("Edit text content").tag(Selection.edit)
+                            Text("Change tonality").tag(Selection.tonality)
+                            Text("Generate tags").tag(Selection.tag)
+                        }
                         
-                        TextField("", text: $question, prompt: Text("Ask a question, explore an idea, or request assistance..."), axis: .vertical)
+                        TextField("", text: $question, prompt: Text("Enter the text you wish to modify"), axis: .vertical)
                             .lineLimit(3...5)
                             .padding(5)
                             .background {
