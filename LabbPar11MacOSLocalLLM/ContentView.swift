@@ -3,7 +3,7 @@
 //  MacOSLocalLLM
 //
 //  Created by Ola Knutsson on 2026-06-30.
-//  Modified by Kim Lindfors
+//  Modified by Kim Lindfors and Miguel Perez dos Santos.
 // Prototypen är baserad på Apples webbartikel om Apples Foundation models:
 // https://developer.apple.com/documentation/foundationmodels/generating-content-and-performing-tasks-with-foundation-models
 //
@@ -16,15 +16,12 @@ import FoundationModels
 
 
 struct ContentView: View {
-    
-    
     var body: some View {
         GenerativeView()
     }
 }
 
 struct GenerativeView: View {
-    
     
     @State private var answer: String = ""
     @State private var question: String = ""
@@ -37,12 +34,9 @@ struct GenerativeView: View {
     // genom @State kommer modellen att komma ihåg konversationen
     @State private var session = LanguageModelSession()
 
-
     // Skapa en referens till system language model.
     private let model = SystemLanguageModel.default
 
-    
-   
     // funktion för att generera svar
     private func generateAnswer() async {
         
@@ -58,16 +52,13 @@ struct GenerativeView: View {
         }
     }
     
-    
-    //add selection enum for cases
+    //selection enum for cases of editing types
     enum Selection: String, CaseIterable, Identifiable {
         case summarize, tag, analyse, edit, tonality
         var id: Self { self }
     }
 
-
     @State private var selectedChoice: Selection = .summarize
-    
     
     /* Notera att vi behöver 5 olika kontrollfall (case) i vår switch-sats, där vi kan ge olika felmeddelanden om modellens tillgänglighet*/
    
@@ -103,6 +94,8 @@ struct GenerativeView: View {
                             .font(.system(.title2, design: .rounded))
                         
                         // Knapp för att be om respons på fråga eller uppmaning
+                        //Todo: lägg till en boolean för knappen, en timeout för knapptryckningen och en laddningsanimation i fältet.
+                        //Lägg till ytterligare kontrollvillkor i outputfältet baserat på knapp-boolean. Eventuell timer knuten till knapp-boolean.
                         Button {
                             Task {
                                 await generateAnswer()
@@ -124,6 +117,7 @@ struct GenerativeView: View {
                             Text(answer.isEmpty ? "The generated response will appear here." : answer)
                             
                                 //todo: här vill vi kunna infoga en laddningsanimation efter att knappen är tryckt
+                                //ev utökat kontrollvillkor baserat på answer.isEmpty och button.wasPressed
                             
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .textSelection(.enabled)
