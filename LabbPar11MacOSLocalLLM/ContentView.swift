@@ -72,7 +72,7 @@ struct GenerativeView: View {
                         /* Design av frågefältet
                          Fundera på om Ask me Anything är en bra rubrik, styrkan i språkmodellen kanske inte ligger i att svara på faktafrågor.
                          Likadant för hjälptexten "Type your question here"*/
-                        Text("Your Local LLM")
+                        Text("TextPal")
                             .font(.system(.largeTitle, design: .rounded, weight: .bold))
                         
                         TextField("", text: $question, prompt: Text("Ask a question, explore an idea, or request assistance..."), axis: .vertical)
