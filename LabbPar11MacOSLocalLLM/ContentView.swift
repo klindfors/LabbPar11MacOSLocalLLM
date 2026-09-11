@@ -33,12 +33,27 @@ struct GenerativeView: View {
     @State private var isSuccess: Bool = false
     @State private var selectedChoice: Selection = .summarize
     @State private var dropDownString: String = ""
+    @State private var showPopup = false
     
     // genom @State kommer modellen att komma ihåg konversationen
     @State private var session = LanguageModelSession()
 
     // Skapa en referens till system language model.
     private let model = SystemLanguageModel.default
+    
+    
+    private var selectionStrings: [Selection: String] = [
+           .summarize: "Summarize the following text: ",
+           .tag: "Generate tags for the following text: ",
+           .analyse: "Analyze the following text: ",
+           .edit: "Edit the following text: ",
+           .tonality: "Change the tonality of the following text to: "
+       ]
+
+       // Update dropDownString when selectedChoice changes
+       private func updateDropDownString() {
+           dropDownString = selectionStrings[selectedChoice] ?? ""
+       }
 
     // funktion för att generera svar
     private func generateAnswer() async {
@@ -53,6 +68,7 @@ struct GenerativeView: View {
         } catch {
             answer = "Failed to answer the question: \(error.localizedDescription)"
         }
+        showPopup = false
     }
     
     //selection enum for cases of editing types
@@ -83,6 +99,13 @@ struct GenerativeView: View {
                             Text("Change tonality").tag(Selection.tonality)
                             Text("Generate tags").tag(Selection.tag)
                         }
+                        .font(.system(.largeTitle, design: .rounded))
+                        .frame(width: 250, height: 40)
+                        .font(.system(.title3, design: .rounded))
+                        .padding(.horizontal, 30)
+                        .onChange(of: selectedChoice) { _ in
+                            updateDropDownString()
+                        }
                         
                         TextField("", text: $question, prompt: Text("Enter the text you wish to modify"), axis: .vertical)
                             .lineLimit(3...5)
@@ -98,8 +121,11 @@ struct GenerativeView: View {
                         //Todo: lägg till en boolean för knappen, en timeout för knapptryckningen och en laddningsanimation i fältet.
                         //Lägg till ytterligare kontrollvillkor i outputfältet baserat på knapp-boolean. Eventuell timer knuten till knapp-boolean.
                         Button {
+                            // Show popup
                             Task {
+                                
                                 await generateAnswer()
+                                showPopup = false // Hide popup after generation
                             }
                         } label: {
                             Text("Generate response")
@@ -151,7 +177,33 @@ struct GenerativeView: View {
                             .padding()
                     }
                     
+                    if showPopup {
+                        ZStack {
+                            Color.black.opacity(0.5)
+                                .edgesIgnoringSafeArea(.all)
+
+                            VStack(spacing: 20) {
+                                Text("Generating answer, please wait!")
+                                    .font(.headline)
+                                    .foregroundColor(.primary)
+
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                    .scaleEffect(1.5)
+                            }
+                            .padding()
+                            .cornerRadius(10)
+                            .shadow(radius: 10)
+                        }
+                    }
+                    
+                    
+           
+                    
+                    
                 }
+                
+                
             }
             
         case .unavailable(.deviceNotEligible):
