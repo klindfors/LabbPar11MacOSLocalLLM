@@ -33,7 +33,10 @@ struct GenerativeView: View {
     @State private var isSuccess: Bool = false
     @State private var selectedChoice: Selection = .summarize
     @State private var dropDownString: String = ""
-    @State private var showPopup = false // State to control popup visibility
+    @State private var showPopup = false
+    @State private var showSummaryOptions = false // Controls visibility of summary options
+    @State private var customSummaryText: String = "" // Text input for custom summary
+    @State private var showCustomSummaryField = false // Controls visibility of custom summary text field
 
     // genom @State kommer modellen att komma ihåg konversationen
     @State private var session = LanguageModelSession()
@@ -53,27 +56,48 @@ struct GenerativeView: View {
     // Update dropDownString when selectedChoice changes
     private func updateDropDownString() {
         dropDownString = selectionStrings[selectedChoice] ?? ""
+        showSummaryOptions = false // Reset summary options when selection changes
+        showCustomSummaryField = false // Reset custom summary field
     }
 
-    // funktion för att generera svar
-    private func generateAnswer() async {
-        showPopup = true // Show popup when starting
+    // Funktion för att generera svar
+    private func generateAnswer(summaryType: String? = nil) async {
+        showPopup = true
 
         /* ändra här om du vill att modellen inte ska komma ihåg sessionen, dvs. vi kan skapa ny sessioner hela tiden, eller om vi vill byta ämne helt
          det finns också en maxgränsen för kontextfönstret i tokens, alltså */
         //   let session = LanguageModelSession()
 
+        var prompt = dropDownString + question
+
+        // Adjust prompt based on summary type
+        if let summaryType = summaryType {
+            switch summaryType {
+            case "shorter":
+                prompt = "Summarize the following text in a shorter way: \(question)"
+            case "longer":
+                prompt = "Summarize the following text in a longer way: \(question)"
+            case "custom":
+                prompt = "Summarize the following text with this custom instruction: \(customSummaryText). Text: \(question)"
+            default:
+                break
+            }
+        }
+
         do {
-            let response = try await session.respond(to: dropDownString + question)
+            let response = try await session.respond(to: prompt)
             answer = response.content
+            if selectedChoice == .summarize && !showSummaryOptions {
+                showSummaryOptions = true // Show summary options after first response
+            }
         } catch {
             answer = "Failed to answer the question: \(error.localizedDescription)"
         }
 
-        showPopup = false // Hide popup when done
+        showPopup = false
     }
 
-    //selection enum for cases of editing types
+    // Selection enum for cases of editing types
     enum Selection: String, CaseIterable, Identifiable {
         case summarize, tag, analyse, edit, tonality
         var id: Self { self }
@@ -87,7 +111,6 @@ struct GenerativeView: View {
                 // Om modellen är tillgänglig, så visar vi vårt UI för att hantera Input till språkmodellen och output från språkmodellen
 
                 ScrollView {
-                    //     Text("The local LLM is available")
                     ScrollView {
                         VStack {
                             /* Design av frågefältet
@@ -95,9 +118,8 @@ struct GenerativeView: View {
                              Likadant för hjälptexten "Type your question here"*/
                             Text("TextPal")
                                 .font(.system(.largeTitle, design: .rounded, weight: .bold))
-                            
 
-                            Picker("Editing style:", selection: $selectedChoice) {
+                            Picker("Selection", selection: $selectedChoice) {
                                 Text("Summarize").tag(Selection.summarize)
                                 Text("Analyse text").tag(Selection.analyse)
                                 Text("Edit text content").tag(Selection.edit)
@@ -119,8 +141,13 @@ struct GenerativeView: View {
 
                             // Knapp för att be om respons på fråga eller uppmaning
 
-                            //Todo: lägg till en boolean för knappen, en timeout för knapptryckningen och en laddningsanimation i fältet.
-                            //Lägg till ytterligare kontrollvillkor i outputfältet baserat på knapp-boolean. Eventuell timer knuten till knapp-boolean.
+                            ScrollView{
+                                Text("Disclaimer: This language model has limited capabilities can make errors. Please make sure that you double check important information.")
+                                    .font(.system(.footnote, design: .rounded, weight: .light))
+                                    .frame(minHeight: 20)
+                                    .background(Color.white.opacity(0))
+                                    .cornerRadius(8)
+                            }
                             Button {
                                 Task {
                                     await generateAnswer()
@@ -134,6 +161,8 @@ struct GenerativeView: View {
                             .controlSize(.extraLarge)
                             //   .padding(.top)
                             .padding()
+                            
+
 
                             // Design av svarsfältet
 
@@ -152,18 +181,74 @@ struct GenerativeView: View {
                             .cornerRadius(8)
                             //  .font(.system(.body, design: .rounded))
                             .font(.system(.title2, design: .rounded))
-                            
-                            ScrollView{
-                                Text("Disclaimer")
-                                    .font(.system(.title3, design: .rounded, weight: .bold))
-                                Text("This language model has limited capabilities can make errors. Please make sure that you double check important information.")
-                                    .font(.system(.footnote, design: .rounded, weight: .light))
+
+                            // Summary options (only for Summarize)
+                            if selectedChoice == .summarize && showSummaryOptions {
+                                VStack {
+                                    HStack {
+                                        Button {
+                                            Task {
+                                                await generateAnswer(summaryType: "shorter")
+                                            }
+                                        } label: {
+                                            Text("Shorter summary")
+                                                .font(.subheadline)
+                                                .foregroundColor(.white)
+                                        }
+                                        .padding() // Apply padding to the button
+                                        .background(Color.blue)
+                                        .cornerRadius(8)
+
+                                        Button {
+                                            Task {
+                                                await generateAnswer(summaryType: "longer")
+                                            }
+                                        } label: {
+                                            Text("Longer summary")
+                                                .font(.subheadline)
+                                                .foregroundColor(.white)
+                                        }
+                                        .padding() // Apply padding to the button
+                                        .background(Color.blue)
+                                        .cornerRadius(8)
+
+                                        Button {
+                                            showCustomSummaryField.toggle()
+                                        } label: {
+                                            Text("Customized summary")
+                                                .font(.subheadline)
+                                                .foregroundColor(.white)
+                                        }
+                                        .padding() // Apply padding to the button
+                                        .background(Color.blue)
+                                        .cornerRadius(8)
+                                    }
+
+                                    // Custom summary text field
+                                    if showCustomSummaryField {
+                                        TextField("Enter custom summary instructions", text: $customSummaryText)
+                                            .textFieldStyle(.roundedBorder)
+                                            .padding(.horizontal)
+
+                                        Button {
+                                            Task {
+                                                await generateAnswer(summaryType: "custom")
+                                            }
+                                        } label: {
+                                            Text("Generate Custom Summary")
+                                                .font(.subheadline)
+                                                .padding()
+                                                .background(Color.green)
+                                                .foregroundColor(.white)
+                                                .cornerRadius(8)
+                                        }
+                                    }
+                                }
+                                
                             }
-                            .frame(minHeight: 20)
-                            .background(Color.white.opacity(0))
-                            .cornerRadius(8)
-                            .padding()
                             
+                            
+
                             /* Design av historikfältet
 
                              Det hjälper användaren att komma ihåg tidigare prompts
@@ -179,8 +264,8 @@ struct GenerativeView: View {
                             Text(question)
                             Text(LocalizedStringKey(answer))
                                 .font(.system(.body, design: .rounded))
+                            
 
-                            //     }
                         }
                     }
                 }
@@ -238,9 +323,6 @@ struct GenerativeView: View {
         print(response.content)
     }
 }
-
-
-
 
 #Preview {
     ContentView()
