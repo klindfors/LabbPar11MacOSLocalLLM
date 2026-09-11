@@ -95,8 +95,9 @@ struct GenerativeView: View {
                              Likadant för hjälptexten "Type your question here"*/
                             Text("TextPal")
                                 .font(.system(.largeTitle, design: .rounded, weight: .bold))
+                            
 
-                            Picker("Selection", selection: $selectedChoice) {
+                            Picker("Editing style:", selection: $selectedChoice) {
                                 Text("Summarize").tag(Selection.summarize)
                                 Text("Analyse text").tag(Selection.analyse)
                                 Text("Edit text content").tag(Selection.edit)
@@ -151,7 +152,18 @@ struct GenerativeView: View {
                             .cornerRadius(8)
                             //  .font(.system(.body, design: .rounded))
                             .font(.system(.title2, design: .rounded))
-
+                            
+                            ScrollView{
+                                Text("Disclaimer")
+                                    .font(.system(.title3, design: .rounded, weight: .bold))
+                                Text("This language model has limited capabilities can make errors. Please make sure that you double check important information.")
+                                    .font(.system(.footnote, design: .rounded, weight: .light))
+                            }
+                            .frame(minHeight: 20)
+                            .background(Color.white.opacity(0))
+                            .cornerRadius(8)
+                            .padding()
+                            
                             /* Design av historikfältet
 
                              Det hjälper användaren att komma ihåg tidigare prompts
