@@ -1,3 +1,4 @@
+
 //
 //  ContentView.swift
 //  MacOSLocalLLM
@@ -30,6 +31,8 @@ struct GenerativeView: View {
     @State private var isLoading: Bool = false
     @State private var isError: Bool = false
     @State private var isSuccess: Bool = false
+    @State private var selectedChoice: Selection = .summarize
+    @State private var dropDownString: String = ""
     
     // genom @State kommer modellen att komma ihåg konversationen
     @State private var session = LanguageModelSession()
@@ -45,7 +48,7 @@ struct GenerativeView: View {
       //   let session = LanguageModelSession()
         
         do {
-            let response = try await session.respond(to: question)
+            let response = try await session.respond(to: dropDownString + question)
             answer = response.content
         } catch {
             answer = "Failed to answer the question: \(error.localizedDescription)"
@@ -57,11 +60,8 @@ struct GenerativeView: View {
         case summarize, tag, analyse, edit, tonality
         var id: Self { self }
     }
-
-    @State private var selectedChoice: Selection = .summarize
     
     /* Notera att vi behöver 5 olika kontrollfall (case) i vår switch-sats, där vi kan ge olika felmeddelanden om modellens tillgänglighet*/
-   
     var body: some View {
         switch model.availability {
         case .available:
@@ -94,6 +94,7 @@ struct GenerativeView: View {
                             .font(.system(.title2, design: .rounded))
                         
                         // Knapp för att be om respons på fråga eller uppmaning
+                        
                         //Todo: lägg till en boolean för knappen, en timeout för knapptryckningen och en laddningsanimation i fältet.
                         //Lägg till ytterligare kontrollvillkor i outputfältet baserat på knapp-boolean. Eventuell timer knuten till knapp-boolean.
                         Button {
@@ -194,4 +195,5 @@ struct GenerativeView: View {
 #Preview {
     ContentView()
 }
+
 
